@@ -116,8 +116,8 @@ function setupScriptProperties(){
   
   var json_array = getkobocatData('https://kc.humanitarianresponse.info/api/v1/forms');
   //Get the username from the json_array URL
-  var kobocat_users = JSON.parse(UrlFetchApp.fetch('https://kc.humanitarianresponse.info/api/v1/users',getUrlFetchOptions()).getContentText());
-  var kobocat_username = kobocat_users[0]["username"];
+  var kobocat_users = JSON.parse(UrlFetchApp.fetch('https://kc.humanitarianresponse.info/api/v1/user',getUrlFetchOptions()).getContentText());
+  var kobocat_username = kobocat_users["username"];
   
   //Assign the script properties
   
