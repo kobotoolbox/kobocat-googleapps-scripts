@@ -29,10 +29,10 @@ The Update_Spreadsheet working example uses token authentication to access the k
 1. Click 'Submit' and 'OK' to the popup
 
 ## Use:
-![Menu](images/menus.png)
-![Choose host](images/choose-host.png)
-![Save api key](images/save-api.png)
-![Ch](images/choose-form.png)
+![Menu](../images/menus.png)
+![Choose host](../images/choose-host.png)
+![Save api key](../images/save-api.png)
+![Ch](../images/choose-form.png)
 
 ## Running the Script:
 1. Click Update from kobocat>Import Data' to update the entire spreadsheet
