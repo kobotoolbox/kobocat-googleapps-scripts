@@ -10,7 +10,8 @@ The Update_Spreadsheet working example uses token authentication to access the k
 1. Export your (blank) dataset as an XLS file
 1. Navigate to Google Drive, upload the XLS file, then click Open in Google Sheets to edit it
 1. Click 'Tools>Script Editor...'. If you are presented with a welcome screen, click Blank Project.
-1. In a separate tab open our import script and copy the entire code to your clipboard. Choose the right file depending on your server:  For kc.humanitarianresponse.info use [this file](Update_spreadsheet_hr_info) | For kc.kobotoolbox.org use [this file](Update_Spreadsheet) 
+1. In a separate tab open our import script and copy the entire code to your clipboard. Choose the right file depending on your server
+1. Create new files choose-form.html and choose-host.html
 1. Back in your Google Sheet, delete any code in the script editor and paste in the code (see previous step) into the editor.
 1. Click the menu item Run>OnOpen.
 1. Select the menu item File > Save all. Name your new script "Update from KoBoToolbox" and click OK.
@@ -27,6 +28,11 @@ The Update_Spreadsheet working example uses token authentication to access the k
 1. Select your kobocat form which updates this sheet
 1. Click 'Submit' and 'OK' to the popup
 
+## Use:
+![Menu](images/menus.png)
+![Choose host](images/choose-host.png)
+![Save api key](images/save-api.png)
+![Ch](images/choose-form.png)
 
 ## Running the Script:
 1. Click Update from kobocat>Import Data' to update the entire spreadsheet
