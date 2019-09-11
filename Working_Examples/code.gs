@@ -2,101 +2,86 @@
 //https://github.com/kobotoolbox/kobocat-googleapps-scripts
 
 /* Declare global varibles that are used multiple times*/
-var app = UiApp.createApplication();//This creates the application which is used for setup
-var current_sheet = SpreadsheetApp.getActiveSpreadsheet(); //This is the current spreadsheet
+
+var current_sheet = SpreadsheetApp.getActive(); //This is the current spreadsheet
 var checked_URL = ''; //This is a placeholder for the URL of the kobocat form the user has selected during setup
 
 /***** SECTION 1 - Everything from here to the next section is part of the Setup menu item *****/
-function setup(){
-//This function gets information from the user including authentication token and which form updates this sheet.
-
-  
-  var description = app.createLabel('You must get your API Token from your user account by visiting http://kc.kobotoolbox.org/YOUR-USERNAME/api-token', true);
-  var grid = app.createGrid(3, 3);
-  grid.setWidget(0, 0, app.createLabel('API Token: '));
-  grid.setWidget(0, 1, app.createTextBox().setName('token'));
-
-  // Create a vertical panel
-  var panel = app.createVerticalPanel();  
-  
-  // Add the description and grid to the panel
-  panel.add(description);
-  panel.add(grid);
-  
-  // Create a button and click handler; pass in the grid object as a callback element and the handler as a click handler
-  // Identify the function as the server click handler
-
-  var button = app.createButton('Submit');
-  var handler = app.createServerClickHandler('saveToken');
-  handler.addCallbackElement(grid);
-  button.addClickHandler(handler);
-  
-  // Add the button to the panel and the panel to the application, then display the application app in the Spreadsheet doc
-  panel.add(button);
-  app.add(panel);
-  current_sheet.show(app);
-
+function setup() {
+  askHost();
 }
 
-function saveToken(e){
-  var app = UiApp.getActiveApplication();
-  
-  //Clear the all properties first
+function askHost() {
+  // Clear the all properties first
   ScriptProperties.deleteAllProperties();
   
-  //Save the token and let the user know by message box
-  ScriptProperties.setProperty('token', e.parameter.token);
-  Browser.msgBox('Token Saved');
-  //Now, get the form list from kobocat and ask the user which form is meant to update this sheet
-  setupScriptProperties();//Get the URLs of each of the users forms
-  askUser();//Now that the token is saved, ask the user which form is meant to update this sheet
+  // choose host: kc.kobotoolbox.org or kc.humanitarianresponse.info
+  var html = HtmlService.createTemplateFromFile("choose-host");
+  SpreadsheetApp.getUi() // Or DocumentApp or SlidesApp or FormApp.
+      .showModalDialog(html.evaluate(), 'Choose Host');
 }
 
-function askUser() {
-  //Load the script properties into an array to see how many forms there are
-  var num_forms = parseInt(ScriptProperties.getProperty('num_forms')) + 1;//we use parseInt to make sure an integer is returned, not a string
+function askAPIToken() {
+  var host = ScriptProperties.getProperty('host');
   
-  //Create a FlexTable to hold values
-  var table = app.createFlexTable().setId('table').setBorderWidth(1).setCellPadding(1)
+  // Prompt the user for a row number.
+  var selectedRow = Browser.inputBox('You must get your API Token from your user account by visiting http://' + host +'/YOUR-USERNAME/api-token:',
+      Browser.Buttons.OK_CANCEL);
   
-  //Set Headers of the table
-  table.setWidget(0, 0, app.createLabel('Form Name'));
-  table.setWidget(0, 1, app.createLabel('Update this sheet'));
-  
-  //Create a server handler that handles the checkbox when it's changed
-  var check = app.createServerHandler('check');
-  check.addCallbackElement(table);
-  
- //The ScriptProperties stores everything as strings. We have to convert true and false strings into boolean properties that can be read by the checkbox
- for(r=0;r<num_forms-1; r++){
-    var formname= 'form'+r+'name';//Define the formname to pull from getProperty
-    var this_sheet_property_name = 'form'+r+'this_sheet';//Define the property name
-    var this_sheet_val = ScriptProperties.getProperty(this_sheet_property_name);
-    if(this_sheet_val == 'true') {
-      this_sheet_val = Boolean(true);
-    }else{
-      this_sheet_val = Boolean(false);
-    }
-
-    //Set the labels and checkboxes in the grid
-    table.setWidget(r+1, 0, app.createLabel(ScriptProperties.getProperty(formname)));
-    table.setWidget(r+1,1,app.createCheckBox().addValueChangeHandler(check).setName('check'+r).setValue(this_sheet_val));// create the checkBox once every row if condition is true and give it a name
+  if (selectedRow == 'cancel') {
+    return;
   }
-
-  // Create a vertical panel
-  var panel = app.createVerticalPanel();
   
-  // Create a button and click handler that closes the app because the action of checking the box kicks off the check(e) function that saves the scriptproperty
-  var button = app.createButton('Submit');
-  var handler = app.createServerHandler('closeApp')
-  button.addClickHandler(handler);
+  saveToken(selectedRow);
+}
 
-  // ...and add the table to the panel
-  panel.add(table);
-  panel.add(button);
-  app.add(panel);
+function saveHost(host) {
+  ScriptProperties.setProperty('host', host);
+  askAPIToken();
+}
+
+function saveToken(token) {
+  //Save the token and let the user know by message box
+  ScriptProperties.setProperty('token', token);
+  Browser.msgBox('Token Saved');
   
-  current_sheet.show(app);
+  //Now, get the form list from kobocat and ask the user which form is meant to update this sheet
+  setupScriptProperties();//Get the URLs of each of the users forms
+  
+}
+
+function setupScriptProperties() {
+  var json_array = getkobocatData('https://' + ScriptProperties.getProperty('host') + '/api/v1/forms');
+  
+  //Get the username from the json_array URL
+//  var kobocat_user = JSON.parse(UrlFetchApp.fetch('https://' + ScriptProperties.getProperty('host') + '/api/v1/user', getUrlFetchOptions()).getContentText());
+//  var kobocat_username = kobocat_user['username']
+  
+  //Assign the script properties
+  
+//  for (var j=0; j<json_array.length; j++)
+//  { 
+//    ScriptProperties.setProperty('form'+j+'name', json_array[j]["id_string"]);//This value saves the name of the form
+//    ScriptProperties.setProperty('form'+j+'URL', json_array[j]["url"]);//This value saves the URL of the form
+//    ScriptProperties.setProperty('form'+j+'this_sheet', 'false');//This value will determine if this form is the one that updates the sheet
+//    ScriptProperties.setProperty('form'+j+'num_responses', 0)//This tracks the number of form responses per form allowing us to know if there has been an update 
+//  }
+  
+  //Save the number of forms
+//  ScriptProperties.setProperty('num_forms', j);
+//  ScriptProperties.setProperty('kobocat_username', kobocat_username);
+  
+  Logger.log(json_array);
+  
+  askUser(json_array);
+}
+
+function askUser(json_array) {
+  Logger.log(json_array);
+  var html = HtmlService.createTemplateFromFile("choose-form");
+  html.json_array = json_array;
+  SpreadsheetApp.getUi() // Or DocumentApp or SlidesApp or FormApp.
+      .showModalDialog(html.evaluate(), 'Choose form to get data');
 }
 
 function check(e) {
@@ -111,50 +96,33 @@ function check(e) {
   } 
 }
 
-function setupScriptProperties(){
-  
-  var json_array = getkobocatData('https://kc.kobotoolbox.org/api/v1/forms');
-  //Get the username from the json_array URL
-  var kobocat_users = JSON.parse(UrlFetchApp.fetch('https://kc.kobotoolbox.org/api/v1/users',getUrlFetchOptions()).getContentText());
-  var kobocat_username = kobocat_users[0]["username"];
-  
-  //Assign the script properties
-  
-  for (var j=0; j<json_array.length; j++)
-  { 
-    ScriptProperties.setProperty('form'+j+'name',json_array[j]["id_string"]);//This value saves the name of the form
-    ScriptProperties.setProperty('form'+j+'URL', json_array[j]["url"]);//This value saves the URL of the form
-    ScriptProperties.setProperty('form'+j+'this_sheet', 'false');//This value will determine if this form is the one that updates the sheet
-    ScriptProperties.setProperty('form'+j+'num_responses', 0)//This tracks the number of form responses per form allowing us to know if there has been an update 
-  }
-  //Save the number of forms
-  ScriptProperties.setProperty('num_forms', j);
-  ScriptProperties.setProperty('kobocat_username', kobocat_username);
-  //Logger.log(ScriptProperties.getProperty('num_forms'));
+function setCheckedUrl(url) {
+  ScriptProperties.setProperty('url',url);
+  checked_URL = url;
+  Browser.msgBox('Ready to Update from Kobocat > Import data, now');
 }
 
-function closeApp(){
-
-app.close();
-Browser.msgBox("Setup Complete");
-
+function closeApp() {
+  Browser.msgBox("Setup Complete");
 }
 
 /***** SECTION 2 - Everything from here to the next section is part of the 'Import Data' menu item *****/
-function ImportData(){
+function ImportData() {
 //This function imports data from kobocat to the existing spreadsheet
 
   //First check to see if the setup has been run by evaluating the first form's name. If it's null run setup
-  if(ScriptProperties.getProperty('form0name')== null){
-    setup();
-  }else{  
-    //See if an update is needed
-    if(UpdateNeeded()){
+//  if (ScriptProperties.getProperty('form0name') == null) {
+//    setup();
+//  } else {  
+//    //See if an update is needed
+    if (UpdateNeeded()) {
       //if needed, get the data from kobocat
-      
       //Call the function getkobocatData but first, change the URL from /forms/ to /data/
-      var form_data_JSON = getkobocatData(checked_URL.replace('/forms/','/data/'));//Note this presently returns all data
       
+      checked_URL = ScriptProperties.getProperty('url');
+      
+      var form_data_JSON = getkobocatData(checked_URL.replace('/forms/','/data/'));//Note this presently returns all data 
+      Logger.log(checked_URL.replace('/forms/','/data/'));
       //Use the setRowsData function (SECTION 5) to write the data to the sheet
       setRowsData(current_sheet.getActiveSheet(), form_data_JSON);
       Logger.log(form_data_JSON);
@@ -163,11 +131,11 @@ function ImportData(){
       //Tell the user that the form is up to date
       Browser.msgBox('This sheet is up to date')
     }
-  }
+//  }
 }
 
-
 function UpdateNeeded(){
+  return true;
 // Check to see which form has a true value for "this_sheet" property
     var num_forms = parseInt(ScriptProperties.getProperty('num_forms'));//we use parseInt to make sure an integer is returned, not a string
     
@@ -181,7 +149,7 @@ function UpdateNeeded(){
     }    
         
     //Connect to kobocat and get the form list
-    var list_of_forms_JSON = getkobocatData('https://kc.kobotoolbox.org/api/v1/forms');
+    var list_of_forms_JSON = getkobocatData('https://' + ScriptProperties.getProperty('host') + '/api/v1/forms');
     
     //Match the checked_formname to the form in the list_of_forms_JSON and get the number of submissions
     for (var i=0; i < list_of_forms_JSON.length; i++){
@@ -204,9 +172,9 @@ function UpdateNeeded(){
 
 /***** SECTION 3 - Communicating with the kobocat server (used more than once) getkobocatData and Token Authorization Parameters *****/
 
-function getkobocatData(getDataURL){
+function getkobocatData(getDataURL) {
   //First, we have to translate the 
-  var list_of_forms = UrlFetchApp.fetch(getDataURL,getUrlFetchOptions()).getContentText();  //provides a TEXT list of form names and URLs
+  var list_of_forms = UrlFetchApp.fetch(getDataURL, getUrlFetchOptions()).getContentText();  //provides a TEXT list of form names and URLs
   var json_array = JSON.parse(list_of_forms); //parse to JSON so we can work with the data in an array
   //Logger.log(json_array);
   return json_array;
@@ -235,8 +203,20 @@ function getUrlFetchOptions() {
 //   - optFirstDataRowIndex: index of the first row where data should be written. This
 //     defaults to the row immediately below the headers.
 function setRowsData(sheet, objects, optHeadersRange, optFirstDataRowIndex) {
+  
+  objects = objects.map(function (item, index) {
+    var keys = Object.keys(objects[index]);
+    for(var i = 0; i < keys.length; i++)
+    {
+      var oldKey = keys[i];
+      var key = oldKey.substring(oldKey.indexOf("question_"));
+      item[key] = item[oldKey];
+  }; 
+    return item;
+});
+  Logger.log(objects);
   var headersRange = optHeadersRange || sheet.getRange(1, 1, 1, sheet.getMaxColumns());
-  var firstDataRowIndex = optFirstDataRowIndex || headersRange.getRowIndex() + 1;
+  var firstDataRowIndex = optFirstDataRowIndex || headersRange.getRowIndex() + 2;
   var headers = headersRange.getValues()[0];
   
   var data = [];
@@ -244,6 +224,23 @@ function setRowsData(sheet, objects, optHeadersRange, optFirstDataRowIndex) {
     var values = []
     for (j = 0; j < headers.length; ++j) {
       var header = headers[j];
+      try {
+        if (header.toString().indexOf('/') >= 0) {
+          header_split = header.toString().split('/');
+          
+          if (('' + objects[i][header_split[0]]).split(' ').indexOf(header_split[1]) >= 0) {
+            values.push(1);
+          } else {
+            values.push(0);
+          }
+          continue;
+        }        
+      }
+      catch(e) {
+        Logger.log(e);
+        Logger.log(typeof headers[j]);
+      }
+      
       // If the header is non-empty and the object value is 0...
       if ((header.length > 0) && (objects[i][header] == 0)) {
         values.push(0);

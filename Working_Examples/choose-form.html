@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+  <h1>Chọn form để lưu data</h1>
+  <div id="app">
+    <? 
+    for (var i = 0; i < json_array.length; i++) { ?>
+        <a href="#" onclick="google.script.run.setCheckedUrl('<?=  json_array[i]['url'] ?>')"><?= json_array[i]['title']?></a><br/>
+    <? } ?>
+  </div>
+  </body>
+</html>
+
+
